@@ -1,4 +1,5 @@
 import numpy as np
+import random #temporary ai hax
 
 def persist_rawinput(prompt, accepted_answers):
     while True:
@@ -28,6 +29,14 @@ def get_move(player):
     x = input("What is the x-coordinate of your move? ")
     y = input("What is the y-coordinate of your move? ")
     return (x,y)
+
+def get_ai_move(boardarr):
+    available_moves = []
+    for y in range(len(boardarr)):
+        for x in range(len(boardarr[y])):
+            if boardarr[y,x] == '_':
+                available_moves.append((x,y))
+    return random.choice(available_moves)
 
 def make_move(boardarr, coords, player):
     if coords[0] > 2 or coords[1] > 2:
@@ -72,7 +81,9 @@ while winner is None and not isDraw:
     while True:
         if currentplayer == AI:
             #TODO: write AI code for playing here
-            
+            move = get_ai_move(board)
+            board = make_move(board, move, currentplayer)
+            break
         else:
             try:
                 render(board)
