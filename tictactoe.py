@@ -1,5 +1,13 @@
 import numpy as np
 
+def persist_rawinput(prompt, accepted_answers):
+    while True:
+        answer = raw_input(prompt).lower()
+        if answer in accepted_answers:
+            return answer
+        else:
+            print "Try again."
+    
 def new_board():
     boardarr = np.array([['_']*3]*3, dtype=str)
     return boardarr
@@ -42,8 +50,18 @@ def check_draw(boardarr):
         return True
     else:
         return False
-  
-    
+
+
+answer = persist_rawinput("Do you want to play against an AI? [y/n]", ('y', 'n'))
+if answer == 'y':
+    answer = persist_rawinput("Which player do you want to be? [X/O]", ('x', 'o'))
+    if answer == 'x':
+        AI = 'O'
+    elif answer == 'o':
+        AI = 'X'
+elif answer == 'n':
+    AI = None    
+
 board = new_board()
 currentplayer = 'X'
 move = None
@@ -52,13 +70,18 @@ isDraw = False
 
 while winner is None and not isDraw:
     while True:
-        try:
-            render(board)
-            move = get_move(currentplayer)
-            board = make_move(board, move, currentplayer)
-            break
-        except Exception:
-            print "Try again."
+        if currentplayer == AI:
+            #TODO: write AI code for playing here
+            
+        else:
+            try:
+                render(board)
+                move = get_move(currentplayer)
+                board = make_move(board, move, currentplayer)
+                break
+            except Exception:
+                print "Try again.\n"
+                
     winner = check_win(board)
     move = None
     if winner is None:
