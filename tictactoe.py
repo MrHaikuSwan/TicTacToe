@@ -30,14 +30,6 @@ def get_move(player):
     y = input("What is the y-coordinate of your move? ")
     return (x,y)
 
-def get_ai_move(boardarr):
-    available_moves = []
-    for y in range(len(boardarr)):
-        for x in range(len(boardarr[y])):
-            if boardarr[y,x] == '_':
-                available_moves.append((x,y))
-    return random.choice(available_moves)
-
 def make_move(boardarr, coords, player):
     if coords[0] > 2 or coords[1] > 2:
         raise Exception("That is outside of the board!")
@@ -61,15 +53,68 @@ def check_draw(boardarr):
         return False
 
 
-answer = persist_rawinput("Do you want to play against an AI? [y/n]", ('y', 'n'))
-if answer == 'y':
-    answer = persist_rawinput("Which player do you want to be? [X/O]", ('x', 'o'))
-    if answer == 'x':
-        AI = 'O'
-    elif answer == 'o':
-        AI = 'X'
-elif answer == 'n':
-    AI = None    
+#### AI's ####
+def get_randai_move(boardarr, player):
+    available_moves = [(x,y) for y in range(len(boardarr)) for x in range(len(boardarr[y])) if boardarr [y,x] == '_']
+    return random.choice(available_moves)
+
+def get_winningmoveai_move(boardarr, player):
+    available_moves = [(x,y) for y in range(len(boardarr)) for x in range(len(boardarr[y])) if boardarr [y,x] == '_']
+    possiblewins = [[(boardarr[i,j], (j,i)) for j in range(len(boardarr[i]))] for i in range(3)]
+    possiblewins += [[(boardarr.T[i,j], (i,j)) for j in range(len(boardarr.T[i]))] for i in range(3)]
+    possiblewins += [[(boardarr[i,i], (i,i)) for i in range(3)]] + [[(boardarr[i,2-i], (2-i,i)) for i in range(3)]]
+    winning_moves = []
+    for possiblewin in possiblewins:
+        possiblewin.sort()
+        onlymarkerposwin = [i[0] for i in possiblewin]
+        if onlymarkerposwin == [player, player, '_']:
+            winmove = possiblewin[2][1]
+            winning_moves.append(winmove)
+    if winning_moves != []:
+        return random.choice(winning_moves)
+    else:
+        return random.choice(available_moves)
+
+def get_winmoveandblocklossai_move(boardarr, player):
+    if player == 'X':
+        other_player = 'O'
+    else:
+        other_player = 'X'
+    available_moves = [(x,y) for y in range(len(boardarr)) for x in range(len(boardarr[y])) if boardarr [y,x] == '_']
+    possiblewins = [[(boardarr[i,j], (j,i)) for j in range(len(boardarr[i]))] for i in range(3)]
+    possiblewins += [[(boardarr.T[i,j], (i,j)) for j in range(len(boardarr.T[i]))] for i in range(3)]
+    possiblewins += [[(boardarr[i,i], (i,i)) for i in range(3)]] + [[(boardarr[i,2-i], (2-i,i)) for i in range(3)]]
+    winning_moves = []
+    blocking_moves = []
+    for possiblewin in possiblewins:
+        possiblewin.sort()
+        onlymarkerposwin = [i[0] for i in possiblewin]
+        if onlymarkerposwin == [player, player, '_']:
+            winmove = possiblewin[2][1]
+            winning_moves.append(winmove)
+        if onlymarkerposwin == [other_player, other_player, '_']:
+            blockmove = possiblewin[2][1]
+            blocking_moves.append(blockmove)
+    if winning_moves != []:
+        return random.choice(winning_moves)
+    elif blocking_moves != []:
+        return random.choice(blocking_moves)
+    else:
+        return random.choice(available_moves)
+#### End AI's ####
+
+#answer = persist_rawinput("Do you want to play against an AI? [y/n]", ('y', 'n'))
+#if answer == 'y':
+#    answer = persist_rawinput("Which player do you want to be? [X/O]", ('x', 'o'))
+#    if answer == 'x':
+#        AI = 'O'
+#    elif answer == 'o':
+#        AI = 'X'
+#elif answer == 'n':
+#    AI = None 
+
+#replace normal player code with AI code to play AI's against each other
+AI = None
 
 board = new_board()
 currentplayer = 'X'
@@ -81,20 +126,19 @@ while winner is None and not isDraw:
     while True:
         if currentplayer == AI:
             #TODO: write AI code for playing here
-            move = get_ai_move(board)
+            move = get_randai_move(board, currentplayer)
             board = make_move(board, move, currentplayer)
             break
         else:
             try:
                 render(board)
-                move = get_move(currentplayer)
+                move = get_winmoveandblocklossai_move(board, currentplayer)
                 board = make_move(board, move, currentplayer)
                 break
             except Exception:
                 print "Try again.\n"
                 
     winner = check_win(board)
-    move = None
     if winner is None:
         isDraw = check_draw(board)
     if currentplayer == 'X':
