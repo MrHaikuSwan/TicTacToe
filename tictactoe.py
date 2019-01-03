@@ -187,17 +187,16 @@ isDraw = False
 
 while winner is None and not isDraw:
     while True:
+        render(board)
         if currentplayer in AI:
             if currentplayer == 'X':
                 move = x_ai_move(board, currentplayer)
             elif currentplayer == 'O':
                 move = o_ai_move(board, currentplayer)
             board = make_move(board, move, currentplayer)
-            render(board)
             break
         else:
             try:
-                render(board)
                 move = human_move(board, currentplayer)
                 board = make_move(board, move, currentplayer)
                 break
@@ -217,4 +216,3 @@ if isDraw:
     print "It's a draw!"
 else:
     print "Player %s won!" % winner
-
