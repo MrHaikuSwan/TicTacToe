@@ -1,13 +1,17 @@
 import numpy as np
-import random #temporary ai hax
+import sys
+import random
+
 
 def persist_rawinput(prompt, accepted_answers):
-    while True:
+    answered = False
+    while not answered:
         answer = raw_input(prompt).lower()
         if answer in accepted_answers:
-            return answer
+            answered = True
         else:
             print "Try again."
+    return answer
     
 def new_board():
     boardarr = np.array([['_']*3]*3, dtype=str)
@@ -23,12 +27,6 @@ def render(boardarr):
     print "1| %s %s %s |" % tuple(row1)
     print "2| %s %s %s |" % tuple(row2)
     print "Y -------"
-
-def get_move(player):
-    print "Player %s:" % player
-    x = input("What is the x-coordinate of your move? ")
-    y = input("What is the y-coordinate of your move? ")
-    return (x,y)
 
 def make_move(boardarr, coords, player):
     if coords[0] > 2 or coords[1] > 2:
@@ -51,14 +49,19 @@ def check_draw(boardarr):
         return True
     else:
         return False
-
+    
+def human_move(boardarr, player):
+    print "Player %s:" % player
+    x = input("What is the x-coordinate of your move? ")
+    y = input("What is the y-coordinate of your move? ")
+    return (x,y)
 
 #### AI's ####
-def get_randai_move(boardarr, player):
+def random_ai(boardarr, player):
     available_moves = [(x,y) for y in range(len(boardarr)) for x in range(len(boardarr[y])) if boardarr [y,x] == '_']
     return random.choice(available_moves)
 
-def get_winningmoveai_move(boardarr, player):
+def winmove_ai(boardarr, player):
     available_moves = [(x,y) for y in range(len(boardarr)) for x in range(len(boardarr[y])) if boardarr [y,x] == '_']
     possiblewins = [[(boardarr[i,j], (j,i)) for j in range(len(boardarr[i]))] for i in range(3)]
     possiblewins += [[(boardarr.T[i,j], (i,j)) for j in range(len(boardarr.T[i]))] for i in range(3)]
@@ -75,7 +78,7 @@ def get_winningmoveai_move(boardarr, player):
     else:
         return random.choice(available_moves)
 
-def get_winmoveandblocklossai_move(boardarr, player):
+def winmove_blockloss_ai(boardarr, player):
     if player == 'X':
         other_player = 'O'
     else:
@@ -102,37 +105,45 @@ def get_winmoveandblocklossai_move(boardarr, player):
     else:
         return random.choice(available_moves)
 #### End AI's ####
+        
+ailookup = {
+        "random_ai": random_ai,
+        "winmove_ai": winmove_ai,
+        "winmove_blockloss_ai": winmove_blockloss_ai}
 
-#answer = persist_rawinput("Do you want to play against an AI? [y/n]", ('y', 'n'))
-#if answer == 'y':
-#    answer = persist_rawinput("Which player do you want to be? [X/O]", ('x', 'o'))
-#    if answer == 'x':
-#        AI = 'O'
-#    elif answer == 'o':
-#        AI = 'X'
-#elif answer == 'n':
-#    AI = None 
-
-#replace normal player code with AI code to play AI's against each other
-AI = None
-
+AI = []
+args = [i.lower() for i in sys.argv[1:3]]
+if args[0] in ailookup:
+    AI.append('X')
+    def x_ai_move(boardarr, player):
+        func = ailookup[args[0]]
+        return func(boardarr, player)
+    
+if args[1] in ailookup:
+    AI.append('O')
+    def o_ai_move(boardarr, player):
+        func = ailookup[args[1]]
+        return func(boardarr, player)
+    
 board = new_board()
 currentplayer = 'X'
-move = None
 winner = None
 isDraw = False
 
 while winner is None and not isDraw:
     while True:
-        if currentplayer == AI:
-            #TODO: write AI code for playing here
-            move = get_randai_move(board, currentplayer)
+        if currentplayer in AI:
+            if currentplayer == 'X':
+                move = x_ai_move(board, currentplayer)
+            elif currentplayer == 'O':
+                move = o_ai_move(board, currentplayer)
             board = make_move(board, move, currentplayer)
+            render(board)
             break
         else:
             try:
                 render(board)
-                move = get_winmoveandblocklossai_move(board, currentplayer)
+                move = human_move(board, currentplayer)
                 board = make_move(board, move, currentplayer)
                 break
             except Exception:
