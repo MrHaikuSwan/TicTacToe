@@ -29,6 +29,7 @@ def render(boardarr):
     print "Y -------"
 
 def make_move(boardarr, coords, player):
+    boardarr = boardarr.copy()
     if coords[0] > 2 or coords[1] > 2:
         raise Exception("That is outside of the board!")
     if boardarr[coords[1], coords[0]] != '_':
@@ -37,6 +38,7 @@ def make_move(boardarr, coords, player):
     return boardarr
 
 def check_win(boardarr):
+    boardarr = boardarr.copy()
     possiblewins = [list(boardarr[i]) for i in range(3)] + [list(boardarr.T[i]) for i in range(3)]
     possiblewins += [[boardarr[i,i] for i in range(3)]] + [[boardarr[i,2-i] for i in range(3)]]
     for possiblewin in possiblewins:
@@ -45,23 +47,27 @@ def check_win(boardarr):
     return None
 
 def check_draw(boardarr):
+    boardarr = boardarr.copy()
     if '_' not in boardarr and check_win(boardarr) is None:
         return True
     else:
         return False
     
 def human_move(boardarr, player):
+    boardarr = boardarr.copy()
     print "Player %s:" % player
     x = input("What is the x-coordinate of your move? ")
     y = input("What is the y-coordinate of your move? ")
     return (x,y)
 
-#### AI's ####
+#### Start AI's ####
 def random_ai(boardarr, player):
+    boardarr = boardarr.copy()
     available_moves = [(x,y) for y in range(len(boardarr)) for x in range(len(boardarr[y])) if boardarr [y,x] == '_']
     return random.choice(available_moves)
 
 def winmove_ai(boardarr, player):
+    boardarr = boardarr.copy()
     available_moves = [(x,y) for y in range(len(boardarr)) for x in range(len(boardarr[y])) if boardarr [y,x] == '_']
     possiblewins = [[(boardarr[i,j], (j,i)) for j in range(len(boardarr[i]))] for i in range(3)]
     possiblewins += [[(boardarr.T[i,j], (i,j)) for j in range(len(boardarr.T[i]))] for i in range(3)]
@@ -79,6 +85,7 @@ def winmove_ai(boardarr, player):
         return random.choice(available_moves)
 
 def winmove_blockloss_ai(boardarr, player):
+    boardarr = boardarr.copy()
     if player == 'X':
         other_player = 'O'
     else:
@@ -104,12 +111,60 @@ def winmove_blockloss_ai(boardarr, player):
         return random.choice(blocking_moves)
     else:
         return random.choice(available_moves)
+
+
+def minimax_score(boardarr, player):
+    boardarr = boardarr.copy()
+    if check_win(boardarr) == 'X':
+        return 10
+    elif check_win(boardarr) == 'O':
+        return -10
+    elif check_draw(boardarr):
+        return 0
+    
+    if player == 'X':
+        other_player = 'O'
+    else:
+        other_player = 'X'
+    available_moves = [(x,y) for y in range(len(boardarr)) for x in range(len(boardarr[y])) if boardarr [y,x] == '_']
+    scores = []
+    for move in available_moves:
+        new_board = make_move(boardarr, move, player)
+        score = minimax_score(new_board, other_player)
+        scores.append(score)
+    if player == 'X':
+        return max(scores)
+    else:
+        return min(scores)
+    
+def minimax_ai(boardarr, player):
+    boardarr = boardarr.copy()
+    if player == 'X':
+        other_player = 'O'
+    else:
+        other_player = 'X'
+    available_moves = [(x,y) for y in range(len(boardarr)) for x in range(len(boardarr[y])) if boardarr [y,x] == '_']
+    move_scores = {}
+    scorevalues = []
+    for move in available_moves:
+        new_board = make_move(boardarr, move, player)
+        score = minimax_score(new_board, other_player)
+        move_scores[move] = score
+        scorevalues.append(score)
+    if player == 'X':
+        best_score = max(scorevalues)
+    else:
+        best_score = min(scorevalues)
+    move = next(key for key, value in move_scores.iteritems() if value == best_score)
+    return move
+        
 #### End AI's ####
         
 ailookup = {
         "random_ai": random_ai,
         "winmove_ai": winmove_ai,
-        "winmove_blockloss_ai": winmove_blockloss_ai}
+        "winmove_blockloss_ai": winmove_blockloss_ai,
+        "minimax_ai": minimax_ai}
 
 AI = []
 args = [i.lower() for i in sys.argv[1:3]]
